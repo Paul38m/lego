@@ -143,7 +143,10 @@ console.log('Deals sorted by price for each community:', communities);
 // 🎯 TODO 10: Sort by date for each community
 // 1. For each set, sort the deals by date, from old to recent
 // 2. Log the sort
-
+for (const community in communities) {
+  communities[community].sort((a,b) => new Date(a.published) - new Date(b.published));
+}
+console.log('Deals sorted by date for each community:', communities);
 
 /**
  * 🧥
