@@ -21,7 +21,7 @@ console.log(MY_FAVORITE_DEALERS[0]);
 /**
  * 🌱
  * Let's go with a very very simple first todo
- * Keep pushing
+ * Keep pushing²
  * 🌱
  */
 
@@ -29,6 +29,8 @@ console.log(MY_FAVORITE_DEALERS[0]);
 // 0. I have 2 favorite lego sets shopping communities stored in MY_FAVORITE_DEALERS variable
 // 1. Create a new variable and assign it the link of the lego set with the highest reduction I can find on these 2 websites
 // 2. Log the variable
+const bestDealUrl = 'https://www.avenuedelabrique.com/jeux-video-lego/ps4-l2kd-esg-lego-2k-drive-edition-super-geniale-ps4/p9147';
+console.log('Best deal URL:', bestDealUrl);
 
 /**
  * 🧱
@@ -42,21 +44,36 @@ console.log(MY_FAVORITE_DEALERS[0]);
 // 🎯 TODO 2: Number of deals
 // 1. Create a variable and assign it the number of deals
 // 2. Log the variable
+const numberOfDeals = deals.length;
+console.log('Number of deals:', numberOfDeals)
 
 // 🎯 TODO 3: Website name
 // 1. Create a variable and assign it the list of shopping community name only
 // 2. Log the variable
 // 3. Log how many shopping communities we have
+const shoppingCommunityName = deals.map(deals => deals.community);
+console.log('List of shopping community name:', shoppingCommunityName)
+console.log('Number of shopping communities', new Set(shoppingCommunityName).size)
 
 // 🎯 TODO 4: Sort by price
 // 1. Create a function to sort the deals by price
 // 2. Create a variable and assign it the list of sets by price from lowest to highest
 // 3. Log the variable
+function sortDealsByPrice(deals){
+  return deals.sort((a,b) => a.price - b.price);
+}
+const sortedDealsByPrice = sortDealsByPrice(deals);
+console.log('Deals sorted by price:', sortedDealsByPrice)
 
 // 🎯 TODO 5: Sort by date
 // 1. Create a function to sort the deals by date
 // 2. Create a variable and assign it the list of deals by date from recent to old
 // 3. Log the variable
+function sortDealsByDate(deals){
+  return deals.sort((a,b) => new Date(b.published) - new Date(a.published));
+}
+const sortedDealsByDate = sortDealsByDate(deals);
+console.log('Deals sorted by date:', sortedDealsByDate)
 
 // 🎯 TODO 6: Filter a specific percentage discount range
 // 1. Filter the list of deals between 50% and 75%
