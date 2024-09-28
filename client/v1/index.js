@@ -369,19 +369,57 @@ const VINTED = [
 // 3. Compute the p99 price value of the listing
 // The p95 value (95th percentile) is the lower value expected to be exceeded in 95% of the vinted items
 
+const prices = VINTED.map(item => item.price);
+
+const totalPrice = prices.reduce((sum, price) => sum + price, 0);
+const averagePrice = totalPrice / prices.length;
+
+const sortedPrices = [...prices].sort((a, b) => a - b);
+
+const getPercentile = (arr, percentile) => {
+  const index = Math.ceil((percentile / 100) * arr.length) - 1;
+  return arr[index];
+};
+
+const p95Price = getPercentile(sortedPrices, 95);
+const p99Price = getPercentile(sortedPrices, 99);
+
+console.log('Average price:', averagePrice.toFixed(2));
+console.log('p95 price:', p95Price);
+console.log('p99 price:', p99Price);
+
 // 🎯 TODO 12: Very old listed items
 // // 1. Log if we have very old items (true or false)
 // // A very old item is an item `released` more than 3 weeks ago.
+function isVeryOld(itemDate) {
+  const today = new Date();
+  const releaseDate = new Date(itemDate);
+  
+  const diffInMilliseconds = today - releaseDate;
+  
+  const diffInDays = diffInMilliseconds / (1000 * 60 * 60 * 24);
+  
+  return diffInDays > 21;
+}
+
+const hasVeryOldItems = VINTED.some(item => isVeryOld(item.released));
+console.log('Do we have very old items?', hasVeryOldItems);
 
 // 🎯 TODO 13: Find a specific item
 // 1. Find the item with the uuid `f2c5377c-84f9-571d-8712-98902dcbb913`
 // 2. Log the item
+const specificUuid = 'f2c5377c-84f9-571d-8712-98902dcbb913';
+const foundItem = VINTED.find(item => item.uuid === specificUuid);
+console.log('Item found:', foundItem);
 
 // 🎯 TODO 14: Delete a specific item
 // 1. Delete the item with the uuid `f2c5377c-84f9-571d-8712-98902dcbb913`
 // 2. Log the new list of items
+const uuidToDelete = 'f2c5377c-84f9-571d-8712-98902dcbb913';
+const updatedVinted = VINTED.filter(item => item.uuid !== uuidToDelete);
+console.log('Updated list of items:', updatedVinted);
 
-// 🎯 TODO 5: Save a favorite item
+// 🎯 TODO 15: Save a favorite item
 // We declare and assign a variable called `sealedCamera`
 let sealedCamera = {
   title: 'La caméra Hommage à Walt Disney lego set 43230',
@@ -394,10 +432,11 @@ let sealedCamera = {
 // we make a copy of `sealedCamera` to `camera` variable
 // and set a new property `favorite` to true
 let camera = sealedCamera;
-
 camera.favorite = true;
 
 // 1. Log `sealedCamera` and `camera` variables
+console.log('sealedCamera:', sealedCamera);
+console.log('camera:', camera);
 // 2. What do you notice?
 
 // we make (again) a new assignment again
@@ -410,9 +449,14 @@ sealedCamera = {
 };
 
 // 3. Update `camera` property with `favorite` to true WITHOUT changing sealedCamera properties
+let cameraa = { ...sealedCamera };
+cameraa.favorite = true;
+
+console.log('sealedCamera:', sealedCamera);
+console.log('camera:', cameraa);
 
 
-// 🎯 TODO 11: Compute the profitability
+// 🎯 TODO 16: Compute the profitability
 // From a specific deal called `deal`
 const deal = {
   'title':  'La caméra Hommage à Walt Disney',
@@ -423,7 +467,12 @@ const deal = {
 
 // 1. Compute the potential highest profitability based on the VINTED items
 // 2. Log the value
+const matchingItems = VINTED.filter(item => item.title.includes('43230'));
+const highestPrice = Math.max(...matchingItems.map(item => item.price));
+const profitability = highestPrice - deal.price;
 
+console.log('Prix le plus élevé dans VINTED pour l\'article 43230:', highestPrice);
+console.log('Rentabilité potentielle maximale:', profitability);
 
 
 /**
