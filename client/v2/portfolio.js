@@ -29,7 +29,7 @@ let currentPagination = {};
 const selectShow = document.querySelector('#show-select');
 const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
-const sectionDeals= document.querySelector('#deals');
+const sectionDeals = document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
 
 /**
@@ -37,7 +37,7 @@ const spanNbDeals = document.querySelector('#nbDeals');
  * @param {Array} result - deals to display
  * @param {Object} meta - pagination meta info
  */
-const setCurrentDeals = ({result, meta}) => {
+const setCurrentDeals = ({ result, meta }) => {
   currentDeals = result;
   currentPagination = meta;
 };
@@ -45,7 +45,7 @@ const setCurrentDeals = ({result, meta}) => {
 /**
  * Fetch deals from api
  * @param  {Number}  [page=1] - current page to fetch
- * @param  {Number}  [size=12] - size of the page
+ * @param  {Number}  [size=6] - size of the page (6, 12, or 24)
  * @return {Object}
  */
 const fetchDeals = async (page = 1, size = 6) => {
@@ -57,13 +57,13 @@ const fetchDeals = async (page = 1, size = 6) => {
 
     if (body.success !== true) {
       console.error(body);
-      return {currentDeals, currentPagination};
+      return { currentDeals, currentPagination };
     }
 
     return body.data;
   } catch (error) {
     console.error(error);
-    return {currentDeals, currentPagination};
+    return { currentDeals, currentPagination };
   }
 };
 
@@ -97,9 +97,9 @@ const renderDeals = deals => {
  * @param  {Object} pagination
  */
 const renderPagination = pagination => {
-  const {currentPage, pageCount} = pagination;
+  const { currentPage, pageCount } = pagination;
   const options = Array.from(
-    {'length': pageCount},
+    { length: pageCount },
     (value, index) => `<option value="${index + 1}">${index + 1}</option>`
   ).join('');
 
@@ -113,9 +113,9 @@ const renderPagination = pagination => {
  */
 const renderLegoSetIds = deals => {
   const ids = getIdsFromDeals(deals);
-  const options = ids.map(id => 
-    `<option value="${id}">${id}</option>`
-  ).join('');
+  const options = ids
+    .map(id => `<option value="${id}">${id}</option>`)
+    .join('');
 
   selectLegoSetIds.innerHTML = options;
 };
@@ -125,7 +125,7 @@ const renderLegoSetIds = deals => {
  * @param  {Object} pagination
  */
 const renderIndicators = pagination => {
-  const {count} = pagination;
+  const { count } = pagination;
 
   spanNbDeals.innerHTML = count;
 };
@@ -134,26 +134,37 @@ const render = (deals, pagination) => {
   renderDeals(deals);
   renderPagination(pagination);
   renderIndicators(pagination);
-  renderLegoSetIds(deals)
+  renderLegoSetIds(deals);
 };
-
-/**
- * Declaration of all Listeners
- */
 
 /**
  * Select the number of deals to display
  */
-selectShow.addEventListener('change', async (event) => {
-  const deals = await fetchDeals(currentPagination.currentPage, parseInt(event.target.value));
+selectShow.addEventListener('change', async event => {
+  const size = parseInt(event.target.value); // get the selected size (6, 12, or 24)
+  const deals = await fetchDeals(currentPagination.currentPage, size); // fetch deals with the selected size
 
-  setCurrentDeals(deals);
-  render(currentDeals, currentPagination);
+  setCurrentDeals(deals); // update current deals
+  render(currentDeals, currentPagination); // re-render deals and pagination
 });
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const deals = await fetchDeals();
+/**
+ * Select the page to display
+ */
+selectPage.addEventListener('change', async event => {
+  const selectedPage = parseInt(event.target.value); // get the selected page
+  const deals = await fetchDeals(selectedPage, parseInt(selectShow.value)); // fetch deals for selected page and size
 
-  setCurrentDeals(deals);
-  render(currentDeals, currentPagination);
+  setCurrentDeals(deals); // update current deals
+  render(currentDeals, currentPagination); // re-render deals and pagination
+});
+
+/**
+ * DOMContentLoaded event to fetch the initial deals and render them
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+  const deals = await fetchDeals(); // fetch the first page of deals with default size 6
+
+  setCurrentDeals(deals); // update current deals
+  render(currentDeals, currentPagination); // render deals and pagination
 });
