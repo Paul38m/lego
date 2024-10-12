@@ -1,4 +1,3 @@
-// Invoking strict mode https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode#invoking_strict_mode
 'use strict';
 
 /**
@@ -31,6 +30,7 @@ const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const sectionDeals = document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
+const discountFilter = document.querySelector('#discount-filter');
 
 /**
  * Set global value
@@ -68,13 +68,27 @@ const fetchDeals = async (page = 1, size = 6) => {
 };
 
 /**
+ * Filter deals based on discount
+ * @param {Array} deals
+ * @return {Array} filtered deals
+ */
+const filterDealsByDiscount = (deals) => {
+  return deals.filter(deal => {
+    const discount = deal.discount; // Assuming the deal object contains a discount field
+    return discount > 50; // Filter deals with discount greater than 50%
+  });
+};
+
+/**
  * Render list of deals
  * @param  {Array} deals
  */
 const renderDeals = deals => {
+  const filteredDeals = discountFilter.checked ? filterDealsByDiscount(deals) : deals; // Apply filter if checkbox is checked
+
   const fragment = document.createDocumentFragment();
   const div = document.createElement('div');
-  const template = deals
+  const template = filteredDeals
     .map(deal => {
       return `
       <div class="deal" id=${deal.uuid}>
@@ -157,6 +171,13 @@ selectPage.addEventListener('change', async event => {
 
   setCurrentDeals(deals); // update current deals
   render(currentDeals, currentPagination); // re-render deals and pagination
+});
+
+/**
+ * Add event listener for the discount filter
+ */
+discountFilter.addEventListener('change', () => {
+  render(currentDeals, currentPagination); // re-render deals when the filter is toggled
 });
 
 /**
