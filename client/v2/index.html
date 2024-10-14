@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>🧱 Lego | Predictability of a lego set deal</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🧱 Lego | Predictability of a Lego set deal</title>
   </head>
   <body>
-    <h1>Lego</h1>
+    <h1>Lego Deals</h1>
     <section id="options">
       <div id="show">
         <label for="show-select">Show:</label>
@@ -17,13 +18,17 @@
       </div>
       <div id="page">
         <label for="page-select">Go to page:</label>
-        <select name="page" id="page-select"> </select>
+        <select name="page" id="page-select"></select>
       </div>
       <div id="filters">
         <span>By best discount</span>
-        <input type="checkbox" id="discount-filter">
+        <input type="checkbox" id="discount-filter" />
         <span>By most commented</span>
+        <input type="checkbox" id="most-commented-filter" />
         <span>By hot deals</span>
+        <input type="checkbox" id="hot-deals-filter" />
+        <span>By favorites</span>
+        <input type="checkbox" id="favorite-filter" />
       </div>
       <div id="sort">
         <label for="sort-select">Sort:</label>
@@ -36,37 +41,37 @@
       </div>
     </section>
     <section id="lego">
-      <h2>Lego sets</h2>
+      <h2>Lego Sets</h2>
       <div>
         <label>Lego set id:</label>
-        <select id="lego-set-id-select"></select> 
+        <select id="lego-set-id-select"></select>
       </div>
     </section>
     <section id="indicators">
       <h2>Indicators</h2>
       <div>
-        <span>Number of deals</span>
+        <span>Number of deals:</span>
         <span id="nbDeals">0</span>
       </div>
       <div>
-        <span>Number of sales</span>
+        <span>Number of sales:</span>
         <span id="nbSales">0</span>
       </div>
       <div>
-        <span>p5 sales price value</span>
-        <span>0</span>
+        <span>p5 sales price value:</span>
+        <span id="p5Price">0</span>
       </div>
       <div>
-        <span>p25 sales price value</span>
-        <span>0</span>
+        <span>p25 sales price value:</span>
+        <span id="p25Price">0</span>
       </div>
       <div>
-        <span>p50 sales price value</span>
-        <span>0</span>
+        <span>p50 sales price value:</span>
+        <span id="p50Price">0</span>
       </div>
       <div>
-        <span>Lifetime value</span>
-        <span>10 days</span>
+        <span>Lifetime value:</span>
+        <span id="lifetimeValue">10 days</span>
       </div>
     </section>
     <section id="deals"></section>
