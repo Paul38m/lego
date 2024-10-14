@@ -4,6 +4,145 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🧱 Lego | Predictability of a Lego set deal</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        margin-top: 20px;
+        color: #ff6600;
+        font-size: 36px;
+      }
+
+      section {
+        width: 80%;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #options,
+      #lego,
+      #indicators {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      label {
+        font-weight: 500;
+      }
+
+      select,
+      input[type="checkbox"] {
+        margin-left: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      #show,
+      #page,
+      #filters,
+      #sort {
+        display: flex;
+        align-items: center;
+      }
+
+      #filters {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      #filters span {
+        margin-right: 10px;
+      }
+
+      #filters input {
+        margin-right: 20px;
+        margin-bottom: 10px;
+      }
+
+      #lego h2,
+      #indicators h2 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #444;
+      }
+
+      #indicators div,
+      #lego div {
+        background-color: #f4f4f4;
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      #indicators div span:first-child {
+        font-weight: bold;
+      }
+
+      #deals {
+        margin-top: 30px;
+      }
+
+      #deals article {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease;
+      }
+
+      #deals article:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      #deals h3 {
+        font-size: 24px;
+        color: #ff6600;
+      }
+
+      #deals p {
+        font-size: 16px;
+        color: #555;
+      }
+
+      /* Pagination Styling */
+      #page label {
+        margin-right: 10px;
+        font-weight: bold;
+      }
+
+      #page select {
+        padding: 8px;
+        border-radius: 4px;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+      }
+
+      #sort select {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+      }
+    </style>
   </head>
   <body>
     <h1>Lego Deals</h1>

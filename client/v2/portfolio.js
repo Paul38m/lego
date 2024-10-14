@@ -56,6 +56,7 @@ const setCurrentDeals = ({ result, meta }) => {
  * Fetch deals from API
  * @param  {Number}  [page=1] - current page to fetch
  * @param  {Number}  [size=6] - size of the page (6, 12, or 24)
+ * @param  {String}  [sort=''] - sort criteria
  * @return {Object}
  */
 const fetchDeals = async (page = 1, size = 6) => {
@@ -201,15 +202,21 @@ const renderDeals = deals => {
     filteredDeals = filterDealsByFavorites(filteredDeals);
   }
 
+  filteredDeals = sortDeals(filteredDeals, sortSelect.value);
+
   const fragment = document.createDocumentFragment();
   const div = document.createElement('div');
   const template = filteredDeals
     .map(deal => {
+      const isFavorite = favoriteDeals.includes(deal.uuid);
       return `
       <div class="deal" id=${deal.uuid}>
         <span>${deal.id}</span>
         <a href="${deal.link}" target="_blank">${deal.title}</a>
         <span>${deal.price}</span>
+        <button onclick="toggleFavoriteDeal('${deal.uuid}')">
+            ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        </button>
       </div>
     `;
     })
@@ -341,6 +348,10 @@ hotDealsFilter.addEventListener('change', () => {
  */
 favoriteFilter.addEventListener('change', () => {
   render(currentDeals, currentPagination); // re-render deals when the filter is toggled
+});
+
+sortSelect.addEventListener('change', () => {
+  renderDeals(currentDeals);
 });
 
 /**
