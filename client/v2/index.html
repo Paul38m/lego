@@ -99,6 +99,7 @@
 
       #deals {
         margin-top: 30px;
+        display: grid;
       }
 
       #deals article {
@@ -141,6 +142,43 @@
       #sort select {
         background-color: #f0f0f0;
         border: 1px solid #ccc;
+      }
+
+      /* Custom styles for deal */
+      .deal {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .deal a {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ff6600;
+        margin-bottom: 10px;
+        text-decoration: none;
+      }
+
+      .deal p {
+        margin-bottom: 10px;
+      }
+
+      .deal button {
+        align-self: flex-end;
+        padding: 10px;
+        background-color: #ff6600;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .deal button:hover {
+        background-color: #ff4500;
       }
     </style>
   </head>

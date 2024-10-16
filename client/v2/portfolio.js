@@ -160,10 +160,10 @@ const sortDeals = (deals, criteria) => {
     return deals.sort((a, b) => b.price - a.price);
   }
   if (criteria === 'date-asc') {
-    return deals.sort((a, b) => new Date(a.date) - new Date(b.date));
+    return deals.sort((a, b) => new Date(a.published) - new Date(b.published));
   }
   if (criteria === 'date-desc') {
-    return deals.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return deals.sort((a, b) => new Date(b.published) - new Date(a.published));
   }
   return deals;
 };
@@ -213,6 +213,7 @@ const renderDeals = deals => {
       <div class="deal" id=${deal.uuid}>
         <span>${deal.id}</span>
         <a href="${deal.link}" target="_blank">${deal.title}</a>
+        <p>Date: ${new Date(deal.published * 1000).toLocaleDateString()}</p>
         <span>${deal.price}</span>
         <button onclick="toggleFavoriteDeal('${deal.uuid}')">
             ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}

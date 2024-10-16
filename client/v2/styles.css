@@ -1,0 +1,22 @@
+.deals-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 colonnes de largeur égale */
+  gap: 20px; /* Espacement entre les deals */
+  padding: 20px;
+}
+
+.deal {
+  border: 1px solid #ccc; /* Bordure autour de chaque deal */
+  border-radius: 8px; /* Coins arrondis */
+  padding: 15px; /* Espacement interne */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombre légère */
+  overflow: hidden; /* Pour couper le contenu qui dépasse */
+  background-color: #fff; /* Couleur de fond */
+}
+
+.deal-link {
+  display: block; /* Faire du lien un bloc pour occuper toute la largeur */
+  overflow: hidden; /* Pour couper le texte qui dépasse */
+  text-overflow: ellipsis; /* Ajouter des points de suspension si le texte est trop long */
+  white-space: nowrap; /* Ne pas couper les mots */
+}
