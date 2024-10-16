@@ -41,6 +41,9 @@ const mostCommentedFilter = document.querySelector('#most-commented-filter');
 const hotDealsFilter = document.querySelector('#hot-deals-filter');
 const favoriteFilter = document.querySelector('#favorite-filter');
 const sortSelect = document.querySelector('#sort-select');
+const modal = document.getElementById('deal-modal');
+const modalBody = document.getElementById('modal-body');
+const closeModalBtn = document.querySelector('.close');
 
 /**
  * Set global value
@@ -99,6 +102,50 @@ const fetchVintedSales = async (id) => {
     console.error('Error fetching Vinted sales:', error);
     return {}; // Return an empty object on error
   }
+};
+
+/**
+ * Fonction pour afficher les informations du deal dans la modale
+ * @param {Object} deal - Les informations du deal à afficher
+ */
+const openDealModal = (deal) => {
+  modalBody.innerHTML = `
+    <h3>${deal.title}</h3>
+    <img src="${deal.photo}" />
+    <p><strong>Price:</strong> ${deal.price} €</p>
+    <p><strong>Published on:</strong> ${new Date(deal.published * 1000).toLocaleDateString()}</p>
+    <p><strong>Temperature:</strong> ${deal.temperature}<strong>°C</strong></p>
+    <a href="${deal.link}" target="_blank">Voir plus de détails</a>
+  `;
+  modal.style.display = 'block';
+};
+
+/**
+ * Ajout de l'événement pour fermer la modale
+ */
+closeModalBtn.addEventListener('click', () => {
+  modal.style.display = 'none';
+});
+
+/**
+ * Ajout de l'événement pour fermer la modale si on clique en dehors du contenu
+ */
+window.addEventListener('click', (event) => {
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
+/**
+ * Ajout de l'événement pour ouvrir la modale lors du clic sur un deal
+ */
+const addDealClickEvents = () => {
+  currentDeals.forEach(deal => {
+    const dealElement = document.getElementById(deal.uuid);
+    dealElement.addEventListener('click', () => {
+      openDealModal(deal);
+    });
+  });
 };
 
 /**
@@ -227,6 +274,7 @@ const renderDeals = deals => {
   fragment.appendChild(div);
   sectionDeals.innerHTML = '<h2>Deals</h2>';
   sectionDeals.appendChild(fragment);
+  addDealClickEvents();
 };
 
 /**
