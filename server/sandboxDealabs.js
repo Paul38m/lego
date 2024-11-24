@@ -1,7 +1,7 @@
-import { scrape } from './avenuedelabrique.js';
+import { scrape } from './dealabs.js';
 import fs from 'fs';  // Importer le module fs pour écrire dans un fichier
 
-async function sandbox(website = 'https://www.avenuedelabrique.com/promotions-et-bons-plans-lego') {
+async function sandbox(website = 'https://www.dealabs.com/groupe/lego') {
   try {
     console.log(`🕵️‍♀️  Browsing ${website} website`);
 
@@ -19,7 +19,7 @@ async function sandbox(website = 'https://www.avenuedelabrique.com/promotions-et
       });
 
       // Sauvegarder les deals dans un fichier JSON
-      const filePath = './deals.json';  // Nom du fichier où les données seront stockées
+      const filePath = './dealabs_deals.json';  // Nom du fichier où les données seront stockées
       fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');  // Écrire les données dans le fichier JSON
 
       console.log(`📝 Deals have been saved to ${filePath}`);
@@ -37,4 +37,3 @@ async function sandbox(website = 'https://www.avenuedelabrique.com/promotions-et
 const [,, eshop] = process.argv;
 
 sandbox(eshop);
-  
