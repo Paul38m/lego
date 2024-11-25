@@ -11,24 +11,36 @@ export async function scrape(url) {
     const html = await response.text();
     const $ = load(html);
 
-    // Vérification de la présence des balises <a> avec la classe "pn"
-    const test = $('a.pn').length;  // Compte le nombre de <a> avec la classe "pn"
+    // Sélectionner tous les <a> avec la classe 'prodl' pour récupérer les produits
+    const test = $('a.prodl').length;  // Compte le nombre de <a> avec la classe "prodl"
     console.log(`Found ${test} deals`);
 
     const deals = [];
 
-    // Sélectionnez chaque bloc de deal avec le tag <a> et la classe "pn"
-    $('a.pn').each((index, element) => {
-      const title = $(element).find('h3.pn-lib').text().trim();
-      const validity = $(element).find('span.pn-dat').text().trim();
-      const description = $(element).find('span.pn-txt').text().trim();
-      const link = $(element).attr('href');
+    // Sélectionner chaque produit
+    $('a.prodl').each((index, element) => {
+      // Récupérer le titre du produit
+      const title = $(element).find('span.prodl-libelle').text().trim();
 
-      if (title && validity && description && link) {
+      // Récupérer la référence (ID du produit)
+      const ref = $(element).find('span.prodl-ref').text().trim();
+
+      // Récupérer le prix
+      const price = $(element).find('span.prodl-prix span').text().trim();
+
+      // Récupérer le pourcentage de réduction
+      const discount = $(element).find('span.prodl-reduc').text().trim();
+
+      // Récupérer le lien du produit
+      const link = $(element).attr('href');
+      
+      if (title && price && link) {
+        // Créer un objet pour chaque deal et l'ajouter au tableau
         deals.push({
           title,
-          validity,
-          description,
+          ref,
+          price,
+          discount,
           link: link ? `https://www.avenuedelabrique.com${link}` : null,
         });
       }
