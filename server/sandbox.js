@@ -1,27 +1,40 @@
-import { scrape } from './avenuedelabrique.js';
-import fs from 'fs';  // Importer le module fs pour écrire dans un fichier
+import { scrape as scrapeAvenueDeLaBrique } from './websites/avenuedelabrique.js';
+import { scrape as scrapeDealabs } from './websites/dealabs.js'; // Importation du scraper Dealabs
+import fs from 'fs';
 
-async function sandbox(website = 'https://www.avenuedelabrique.com/promotions-et-bons-plans-lego') {
+async function sandbox(website) {
   try {
-    console.log(`🕵️‍♀️  Browsing ${website} website`);
+    let deals = [];
 
-    // Récupère les offres de la fonction scrape
-    const deals = await scrape(website);
+    console.log(`🕵️‍♀️  Scraping deals for: ${website}`);
 
-    // Si aucune offre n'est trouvée
+    if (website === 'avenue') {
+      const url = 'https://www.avenuedelabrique.com/promotions-et-bons-plans-lego';
+      deals = await scrapeAvenueDeLaBrique(url);
+    } else if (website === 'dealabs') {
+      const url = 'https://www.dealabs.com/groupe/lego';
+      deals = await scrapeDealabs(url);
+    } else if (website === 'all') {
+      console.log('🕵️‍♀️  Scraping both Avenue de la Brique and Dealabs...');
+      const [avenueDeals, dealabsDeals] = await Promise.all([
+        scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego'),
+        scrapeDealabs('https://www.dealabs.com/groupe/lego'),
+      ]);
+      deals = [...avenueDeals, ...dealabsDeals]; // Combine les résultats
+    } else {
+      throw new Error('Invalid website argument. Use "avenue", "dealabs", or "all".');
+    }
+
     if (deals.length === 0) {
       console.log('🔍 No deals found.');
     } else {
       console.log('🎉 Found the following deals:');
-      // Affiche chaque deal trouvé
       deals.forEach(deal => {
         console.log(`- ${deal.title}\n  Validity: ${deal.validity}\n  Description: ${deal.description}\n  Link: ${deal.link}\n`);
       });
 
-      // Sauvegarder les deals dans un fichier JSON
-      const filePath = './deals.json';  // Nom du fichier où les données seront stockées
-      fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');  // Écrire les données dans le fichier JSON
-
+      const filePath = `./${website}_deals.json`; // Nom de fichier spécifique pour chaque site
+      fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
       console.log(`📝 Deals have been saved to ${filePath}`);
     }
 
@@ -33,8 +46,7 @@ async function sandbox(website = 'https://www.avenuedelabrique.com/promotions-et
   }
 }
 
-// Permet de passer l'URL du site en argument de ligne de commande
-const [,, eshop] = process.argv;
+// Permet de passer l'option (avenue, dealabs, all) en argument
+const [,, option] = process.argv;
 
-sandbox(eshop);
-  
+sandbox(option);

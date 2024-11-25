@@ -1,52 +1,42 @@
-const fetch = require('node-fetch');
-const cheerio = require('cheerio');
+import { load } from 'cheerio';
+import fetch from 'node-fetch';
 
-/**
- * Parse webpage data response
- * @param  {String} data - html response
- * @return {Object} deal
- */
-const parse = data => {
-  const $ = cheerio.load(data, {'xmlMode': true});
+export async function scrape(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la récupération de la page: ${response.statusText}`);
+    }
 
-  return $('div.prods a')
-    .map((i, element) => {
-      const price = parseFloat(
-        $(element)
-          .find('span.prodl-prix span')
-          .text()
-      );
+    const html = await response.text();
+    const $ = load(html);
 
-      const discount = Math.abs(parseInt(
-        $(element)
-          .find('span.prodl-reduc')
-          .text()
-      ));
+    // Vérification de la présence des balises <a> avec la classe "pn"
+    const test = $('a.pn').length;  // Compte le nombre de <a> avec la classe "pn"
+    console.log(`Found ${test} deals`);
 
-      return {
-        discount,
-        price,
-        'title': $(element).attr('title'),
-      };
-    })
-    .get();
-};
+    const deals = [];
 
-/**
- * Scrape a given url page
- * @param {String} url - url to parse
- * @returns 
- */
-module.exports.scrape = async url => {
-  const response = await fetch(url);
+    // Sélectionnez chaque bloc de deal avec le tag <a> et la classe "pn"
+    $('a.pn').each((index, element) => {
+      const title = $(element).find('h3.pn-lib').text().trim();
+      const validity = $(element).find('span.pn-dat').text().trim();
+      const description = $(element).find('span.pn-txt').text().trim();
+      const link = $(element).attr('href');
 
-  if (response.ok) {
-    const body = await response.text();
+      if (title && validity && description && link) {
+        deals.push({
+          title,
+          validity,
+          description,
+          link: link ? `https://www.avenuedelabrique.com${link}` : null,
+        });
+      }
+    });
 
-    return parse(body);
+    return deals;
+  } catch (error) {
+    console.error(`Erreur lors du scraping: ${error.message}`);
+    throw error;
   }
-
-  console.error(response);
-
-  return null;
-};
+}
