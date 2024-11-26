@@ -61,7 +61,7 @@ export async function findDealsSortedByDate() {
   try {
     const collection = db.collection('deals');
     const sortedByDate = await collection.find({})
-      .sort({ date: -1 }) // Trier par date décroissante
+      .sort({ releaseDate: -1 }) // Trier par date décroissante
       .toArray();
     return sortedByDate;
   } finally {
