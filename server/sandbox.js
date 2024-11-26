@@ -6,7 +6,7 @@ import {
   findMostCommentedDeals,
   findDealsSortedByPrice,
   findDealsSortedByDate,
-  findSalesForLegoSetId,
+  countDealsByModel,
   findRecentSales,
 } from './queries.js';
 import { MongoClient } from 'mongodb';
@@ -82,10 +82,9 @@ async function sandbox(option) {
       const dealsByDate = await findDealsSortedByDate();
       console.log(dealsByDate);
 
-      const legoSetId = '42156';
-      console.log(`🔍 Finding sales for LEGO set ID ${legoSetId}...`);
-      const salesForSet = await findSalesForLegoSetId(legoSetId);
-      console.log(salesForSet);
+      console.log('🔍 Counting unique models and their occurrences...');
+      const modelCounts = await countDealsByModel();
+      console.log('📊 Models and their counts:', modelCounts);
 
       console.log('🔍 Finding recent sales (less than 3 weeks old)...');
       const recentSales = await findRecentSales();

@@ -69,17 +69,41 @@ export async function findDealsSortedByDate() {
   }
 }
 
-// 5. Trouver toutes les ventes pour un set LEGO donné
-export async function findSalesForLegoSetId(legoSetId) {
+export async function countDealsByModel() {
   const { client, db } = await connectToDatabase();
   try {
-    const collection = db.collection('sales');
-    const sales = await collection.find({ legoSetId }).toArray();
-    return sales;
+    const collection = db.collection('deals');
+
+    // Récupère tous les deals
+    const allDeals = await collection.find({}).toArray();
+
+    // Utilise un objet pour compter les occurrences des modèles
+    const modelCounts = {};
+
+    allDeals.forEach((deal) => {
+      const model = deal.model;
+      if (model) {
+        if (modelCounts[model]) {
+          modelCounts[model] += 1; // Incrémente le compteur si le modèle existe déjà
+        } else {
+          modelCounts[model] = 1; // Initialise le compteur à 1 si le modèle est nouveau
+        }
+      }
+    });
+
+    // Retourne un tableau contenant les modèles et leurs occurrences
+    const result = Object.entries(modelCounts).map(([model, count]) => ({
+      model,
+      count,
+    }));
+
+    return result; // Retourne les modèles avec les compteurs
   } finally {
     await client.close();
   }
 }
+
+
 
 // 6. Trouver toutes les ventes collectées il y a moins de 3 semaines
 export async function findRecentSales() {
