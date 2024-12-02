@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+  import { MongoClient } from 'mongodb';
 
 // MongoDB URI et nom de la base de données
 const MONGODB_URI = 'mongodb+srv://Paul:Carapuce38@cluster0.udtxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';

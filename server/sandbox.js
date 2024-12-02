@@ -1,5 +1,6 @@
 import { scrape as scrapeAvenueDeLaBrique } from './websites/avenuedelabrique.js';
 import { scrape as scrapeDealabs } from './websites/dealabs.js';
+import { scrape as scrapeVinted } from './websites/vinted.js';
 import fs from 'fs';
 import {
   findBestDiscountDeals,
@@ -39,6 +40,9 @@ async function sandbox(option) {
     } else if (option === 'dealabs') {
       console.log('🕵️‍♀️ Scraping deals from Dealabs...');
       deals = await scrapeDealabs('https://www.dealabs.com/groupe/lego');
+    } else if (option === 'vinted') {
+      console.log('🕵️‍♀️ Scraping deals from Vinted...');
+      deals = await scrapeVinted('42173'); // Rechercher des deals LEGO 42173
     } else if (option === 'all') {
       console.log('🕵️‍♀️ Scraping deals from both Avenue de la Brique and Dealabs...');
       const [avenueDeals, dealabsDeals] = await Promise.all([
