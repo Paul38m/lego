@@ -7,7 +7,7 @@ import {
   findMostCommentedDeals,
   findDealsSortedByPrice,
   findDealsSortedByDate,
-  countDealsByModel,
+  countDealsById,
   findRecentSales,
 } from './queries.js';
 import { MongoClient } from 'mongodb';
@@ -87,8 +87,8 @@ async function sandbox(option) {
       console.log(dealsByDate);
 
       console.log('🔍 Counting unique models and their occurrences...');
-      const modelCounts = await countDealsByModel();
-      console.log('📊 Models and their counts:', modelCounts);
+      const idCounts = await countDealsById();
+      console.log('📊 Models and their counts:', idCounts);
 
       console.log('🔍 Finding recent sales (less than 3 weeks old)...');
       const recentSales = await findRecentSales();

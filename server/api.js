@@ -1,6 +1,7 @@
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
+const deals = require('./avenue_deals.json');
 
 const PORT = 8092;
 
@@ -21,3 +22,5 @@ app.get('/', (request, response) => {
 app.listen(PORT);
 
 console.log(`📡 Running on port ${PORT}`);
+
+

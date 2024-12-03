@@ -26,13 +26,13 @@ export async function findBestDiscountDeals() {
   }
 }
 
-// 2. Trouver les deals les plus commentés
+// 2. Trouver les deals avec plus de 10 commentaires
 export async function findMostCommentedDeals() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
-    const mostCommented = await collection.find({ comments: { $exists: true } })
-      .sort({ comments: -1 })
+    const mostCommented = await collection.find({ commentCount: { $gt: 10 } })
+      .sort({ commentCount: -1 })
       .limit(10)
       .toArray();
     return mostCommented;
@@ -40,6 +40,7 @@ export async function findMostCommentedDeals() {
     await client.close();
   }
 }
+
 
 // 3. Trouver tous les deals triés par prix
 export async function findDealsSortedByPrice() {
@@ -61,7 +62,7 @@ export async function findDealsSortedByDate() {
   try {
     const collection = db.collection('deals');
     const sortedByDate = await collection.find({})
-      .sort({ releaseDate: -1 }) // Trier par date décroissante
+      .sort({ publishedAt: -1 }) // Trier par date décroissante
       .toArray();
     return sortedByDate;
   } finally {
@@ -69,7 +70,8 @@ export async function findDealsSortedByDate() {
   }
 }
 
-export async function countDealsByModel() {
+//Compte les deals par id
+export async function countDealsById() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
@@ -78,22 +80,22 @@ export async function countDealsByModel() {
     const allDeals = await collection.find({}).toArray();
 
     // Utilise un objet pour compter les occurrences des modèles
-    const modelCounts = {};
+    const idCounts = {};
 
     allDeals.forEach((deal) => {
-      const model = deal.model;
-      if (model) {
-        if (modelCounts[model]) {
-          modelCounts[model] += 1; // Incrémente le compteur si le modèle existe déjà
+      const id = deal.id;
+      if (id) {
+        if (idCounts[id]) {
+          idCounts[id] += 1; // Incrémente le compteur si le modèle existe déjà
         } else {
-          modelCounts[model] = 1; // Initialise le compteur à 1 si le modèle est nouveau
+          idCounts[id] = 1; // Initialise le compteur à 1 si le modèle est nouveau
         }
       }
     });
 
     // Retourne un tableau contenant les modèles et leurs occurrences
-    const result = Object.entries(modelCounts).map(([model, count]) => ({
-      model,
+    const result = Object.entries(idCounts).map(([id, count]) => ({
+      id,
       count,
     }));
 
@@ -104,15 +106,21 @@ export async function countDealsByModel() {
 }
 
 
-
-// 6. Trouver toutes les ventes collectées il y a moins de 3 semaines
+// 6. Trouver les deals publiés il y a moins de 3 semaines
 export async function findRecentSales() {
   const { client, db } = await connectToDatabase();
   try {
-    const collection = db.collection('sales');
+    const collection = db.collection('deals');
     const threeWeeksAgo = new Date();
     threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21); // Date d'il y a 3 semaines
-    const recentSales = await collection.find({ dateScraped: { $gte: threeWeeksAgo } }).toArray();
+
+    // Requête pour récupérer les deals publiés dans les 3 dernières semaines
+    const recentSales = await collection.find({
+      publishedAt: {
+        $gte: threeWeeksAgo.toISOString()  // Convertir en ISO string
+      }
+    }).toArray();
+
     return recentSales;
   } finally {
     await client.close();
