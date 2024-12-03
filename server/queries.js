@@ -56,19 +56,36 @@ export async function findDealsSortedByPrice() {
   }
 }
 
-// 4. Trouver tous les deals triés par date
 export async function findDealsSortedByDate() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
-    const sortedByDate = await collection.find({})
-      .sort({ publishedAt: -1 }) // Trier par date décroissante
-      .toArray();
+
+    // Récupérer tous les deals
+    const deals = await collection.find({}).toArray();
+
+    // Convertir 'publishedAt' en objet Date, trier et ensuite reconvertir en chaîne
+    const sortedByDate = deals
+      .map(deal => {
+        // Convertir 'publishedAt' en objet Date
+        deal.publishedAt = new Date(deal.publishedAt); // Conversion en objet Date
+        return deal;
+      })
+      .sort((a, b) => b.publishedAt - a.publishedAt) // Trier par date décroissante
+      .map(deal => {
+        // Reconversion en chaîne après le tri
+        deal.publishedAt = deal.publishedAt.toLocaleString(); // Convertir la date en chaîne
+        return deal;
+      });
+
     return sortedByDate;
   } finally {
     await client.close();
   }
 }
+
+
+
 
 //Compte les deals par id
 export async function countDealsById() {
@@ -111,18 +128,32 @@ export async function findRecentSales() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
+    
+    // Calculer la date il y a 3 semaines
     const threeWeeksAgo = new Date();
     threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21); // Date d'il y a 3 semaines
+    
+    // Récupérer tous les deals
+    const deals = await collection.find({}).toArray();
 
-    // Requête pour récupérer les deals publiés dans les 3 dernières semaines
-    const recentSales = await collection.find({
-      publishedAt: {
-        $gte: threeWeeksAgo.toISOString()  // Convertir en ISO string
-      }
-    }).toArray();
+    // Filtrer les deals qui ont une date de publication dans les 3 dernières semaines
+    const recentSales = deals
+      .filter(deal => {
+        // Assurez-vous que la date 'publishedAt' est un objet Date
+        const dealDate = new Date(deal.publishedAt);
+        return dealDate >= threeWeeksAgo; // Garder les deals publiés il y a moins de 3 semaines
+      })
+      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); // Trier par date décroissante
 
-    return recentSales;
+    // Reconvertir les dates en chaînes pour affichage
+    const result = recentSales.map(deal => {
+      deal.publishedAt = new Date(deal.publishedAt).toLocaleString(); // Convertir en chaîne
+      return deal;
+    });
+
+    return result;
   } finally {
     await client.close();
   }
 }
+
