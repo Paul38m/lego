@@ -1,95 +1,91 @@
 import fetch from 'node-fetch';
 import { v4 as uuidv4 } from 'uuid';
 
-// Configuration des headers pour les requêtes
 const headers = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'fr',
   Connection: 'keep-alive',
+  Referer: 'https://www.vinted.fr/catalog?search_text=10306&brand_ids%5B%5D=89162&page=1&status_ids%5B%5D=6&status_ids%5B%5D=1'
 };
 
 /**
- * Fonction pour récupérer un token CSRF et les cookies nécessaires
- * @returns {Object} - Contient les cookies et le token CSRF
+ * Parse JSON data from Vinted
+ * @param {Object} data - JSON response
+ * @param {String} item_id - Search term or ID
+ * @returns {Array} - Array of parsed deal objects
  */
-async function getCsrfTokenAndCookies() {
-  const url = 'https://www.vinted.fr/';
-  try {
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`Initial request failed with status: ${response.status}`);
-    }
-
-    const cookies = response.headers.get('set-cookie');
-    const text = await response.text();
-    const csrfTokenMatch = text.match(/"CSRF_TOKEN":"([^"]+)"/);
-    const csrfToken = csrfTokenMatch ? csrfTokenMatch[1] : null;
-
-    if (!csrfToken) {
-      throw new Error('Unable to retrieve CSRF token');
-    }
-
-    return { cookies, csrfToken };
-  } catch (error) {
-    console.error('Error retrieving CSRF token and cookies:', error);
-    throw error;
+const parse = (data, item_id) => {
+  if (!data || !data.items) {
+    console.error('❌ Error: No items found in the response data.');
+    return [];
   }
-}
+
+  return data.items.map(item => ({
+    id: item_id,
+    title: item.title || 'No title',
+    price: parseFloat(item.total_item_price.amount) || 0,
+    link: `${item.url || ''}`,
+    published: new Date(item.photo.high_resolution.timestamp * 1000).toISOString(),
+    uuid: uuidv4()
+  }));
+};
 
 /**
- * Analyse les données de la réponse et retourne les deals
- * @param {Object} data - Données JSON issues de l'API
- * @param {String} itemId - Identifiant de l'article recherché
- * @returns {Array} - Liste des deals
+ * Fetch and scrape deals from Vinted
+ * @param {String} item_id - Vinted item search ID
+ * @returns {Array} - Scraped deals
  */
-function parseDeals(data, itemId) {
-  return data.items.map((item) => {
-    const title = item.title || 'Unknown title';
-    const price = parseFloat(item.total_item_price.amount) || 0; // Total item price
-    const link = item.url || '';
-    const publishedAt = new Date(item.photo.high_resolution.timestamp * 1000).toLocaleString();
-    const uuid = uuidv4();
-
-    return {
-      id: itemId,
-      title,
-      price,
-      link,
-      publishedAt,
-      uuid,
-    };
-  });
-}
-
-/**
- * Scrape une page Vinted pour les deals correspondants à un ID donné
- * @param {String} url - URL de la page à scraper
- * @param {String} itemId - Identifiant de l'article recherché
- * @returns {Array|null} - Liste des deals ou null en cas d'erreur
- */
-export async function scrape(url, itemId) {
+export async function scrape(item_id) {
   try {
-    const { csrfToken, cookies } = await getCsrfTokenAndCookies();
+    const { csrfToken, cookies } = await TokenCookie();
+    const url = `https://www.vinted.fr/api/v2/catalog/items?search_text=${item_id}&brand_ids%5B%5D=89162&page=1&status_ids%5B%5D=6&status_ids%5B%5D=1`;
 
     const response = await fetch(url, {
       headers: {
         ...headers,
         'X-Csrf-Token': csrfToken,
-        Cookie: cookies,
-      },
+        Cookie: cookies
+      }
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Response error: status ${response.status} - ${response.statusText}\n${errorText}`);
-      return null;
+      console.error(`❌ Response error: ${response.status} - ${response.statusText}`);
+      return [];
     }
 
     const data = await response.json();
-    return parseDeals(data, itemId);
+    return parse(data, item_id);
   } catch (error) {
-    console.error(`Error scraping URL ${url}:`, error);
-    return null;
+    console.error('❌ Error scraping Vinted:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch CSRF token and cookies for Vinted
+ * @returns {Object} - CSRF token and cookies
+ */
+async function TokenCookie() {
+  try {
+    const response = await fetch('https://www.vinted.fr/', {
+      headers: { 'User-Agent': headers['User-Agent'] }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+    }
+
+    const cookies = response.headers.get('set-cookie') || '';
+    const text = await response.text();
+    const csrfTokenMatch = text.match(/"CSRF_TOKEN":"([^"]+)"/);
+    const csrfToken = csrfTokenMatch ? csrfTokenMatch[1] : '';
+
+    if (!csrfToken) throw new Error('CSRF token not found in the response.');
+
+    return { csrfToken, cookies };
+  } catch (error) {
+    console.error('❌ Error fetching token and cookies:', error);
+    return { csrfToken: '', cookies: '' };
   }
 }

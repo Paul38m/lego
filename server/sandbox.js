@@ -8,7 +8,7 @@ import {
   findDealsSortedByPrice,
   findDealsSortedByDate,
   countDealsById,
-  findRecentSales,
+  findRecentSales
 } from './queries.js';
 import { MongoClient } from 'mongodb';
 
@@ -17,23 +17,20 @@ const MONGODB_DB_NAME = 'lego';
 
 async function sandbox(option) {
   let client;
+
   try {
-    // Étape 1 : Connexion à MongoDB
     console.log('📦 Connecting to MongoDB...');
     client = await MongoClient.connect(MONGODB_URI);
     const db = client.db(MONGODB_DB_NAME);
     const collection = db.collection('deals');
 
-    // Si l'option est 'avenue', 'dealabs', ou 'all', vider la collection avant de scraper
-    if (option === 'avenue' || option === 'dealabs' || option === 'all') {
+    if (['avenue', 'dealabs', 'vinted', 'all'].includes(option)) {
       console.log('🧹 Clearing previous deals from MongoDB...');
-      await collection.deleteMany({});  // Supprime tous les documents de la collection
-      console.log('✅ Previous deals cleared.');
+      await collection.deleteMany({});
     }
 
     let deals = [];
 
-    // Scraping des deals
     if (option === 'avenue') {
       console.log('🕵️‍♀️ Scraping deals from Avenue de la Brique...');
       deals = await scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego');
@@ -42,31 +39,29 @@ async function sandbox(option) {
       deals = await scrapeDealabs('https://www.dealabs.com/groupe/lego');
     } else if (option === 'vinted') {
       console.log('🕵️‍♀️ Scraping deals from Vinted...');
-      deals = await scrapeVinted('42173'); // Rechercher des deals LEGO 42173
+      deals = await scrapeVinted('42173'); // Exemple : recherche d'un set LEGO spécifique
     } else if (option === 'all') {
-      console.log('🕵️‍♀️ Scraping deals from both Avenue de la Brique and Dealabs...');
-      const [avenueDeals, dealabsDeals] = await Promise.all([
+      console.log('🕵️‍♀️ Scraping deals from all sources...');
+      const [avenueDeals, dealabsDeals, vintedDeals] = await Promise.all([
         scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego'),
         scrapeDealabs('https://www.dealabs.com/groupe/lego'),
+        scrapeVinted('42173')
       ]);
-      deals = [...avenueDeals, ...dealabsDeals];
+      deals = [...avenueDeals, ...dealabsDeals, ...vintedDeals];
     }
 
-    // Insertion des données dans MongoDB
     if (deals.length > 0) {
-      console.log('📂 Inserting scraped deals into MongoDB...');
+      console.log(`📂 Inserting ${deals.length} deals into MongoDB...`);
       const result = await collection.insertMany(deals);
       console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
 
-      // Sauvegarde des deals en local
       const filePath = `./${option}_deals.json`;
       fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
       console.log(`📝 Deals have been saved to ${filePath}`);
     } else {
-      console.log('🔍 No deals found during scraping.');
+      console.log('🔍 No deals found.');
     }
 
-    // Exécution des requêtes MongoDB si l'option est 'queries'
     if (option === 'queries') {
       console.log('🔍 Executing MongoDB queries...');
 
@@ -99,7 +94,6 @@ async function sandbox(option) {
   } catch (e) {
     console.error(`❌ Error: ${e.message}`);
   } finally {
-    // Étape 3 : Fermer la connexion à MongoDB
     if (client) {
       console.log('🔌 Closing MongoDB connection...');
       await client.close();
@@ -107,7 +101,5 @@ async function sandbox(option) {
   }
 }
 
-// Permet de passer une option (avenue, dealabs, all, queries) en argument
 const [,, option] = process.argv;
-
 sandbox(option);
