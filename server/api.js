@@ -36,7 +36,7 @@ app.get('/', (request, response) => {
 });
 
 app.get('/deals/search', async (request, response) => {
-  const { limit = 12, price, date, filterBy } = request.query;
+  const { limit = 12, price, date, filterBy, sortBy } = request.query;
 
   // Build query object
   let query = {};
@@ -60,11 +60,21 @@ app.get('/deals/search', async (request, response) => {
   }
 
   try {
-    // Fetch deals from MongoDB with the applied filters
+    // Determine the sorting order
+    let sortOrder = { price: 1 };  // Default sort by price in ascending order
+
+    // If sortBy is specified, sort by it
+    if (sortBy === 'date') {
+      sortOrder = { publishedAt: 1 };  // Sort by publishedAt (date) in ascending order (oldest first)
+    } else if (sortBy === 'price') {
+      sortOrder = { price: 1 };  // Sort by price in ascending order (default behavior)
+    }
+
+    // Fetch deals from MongoDB with the applied filters and sorting
     const deals = await db
       .collection(COLLECTION_NAME)
       .find(query)
-      .sort({ price: 1 })  // Sort by price in ascending order
+      .sort(sortOrder)  // Apply the sorting based on the query parameter
       .limit(parseInt(limit))  // Limit the number of results to the specified 'limit'
       .toArray();
 
@@ -79,7 +89,8 @@ app.get('/deals/search', async (request, response) => {
       temperature: deal.temperature,
       photo: deal.photo,
       comments: deal.commentCount,
-      published: new Date(deal.publishedAt).getTime() / 1000,  // Convert to UNIX timestamp
+      // Format the 'publishedAt' as YYYY/MM/DD
+      published: new Date(deal.publishedAt).toLocaleDateString('en-GB'),  // 'en-GB' for DD/MM/YYYY
       title: deal.title,
       id: deal.id,
       community: deal.community,
@@ -100,7 +111,6 @@ app.get('/deals/search', async (request, response) => {
 
 
 
-
 app.get('/deals/:id', async (request, response) => {
   const dealId = request.params.id;
 
@@ -117,8 +127,6 @@ app.get('/deals/:id', async (request, response) => {
     response.status(500).send({ error: 'Internal Server Error' });
   }
 });
-
-
 
 // Démarrage du serveur
 app.listen(PORT, () => {
