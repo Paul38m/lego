@@ -36,7 +36,45 @@ async function sandbox(option) {
       deals = await scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego');
     } else if (option === 'dealabs') {
       console.log('🕵️‍♀️ Scraping deals from Dealabs...');
-      deals = await scrapeDealabs('https://www.dealabs.com/groupe/lego');
+      
+      let deals = [];
+      let page = 1;
+      let hasMorePages = true;
+    
+      while (hasMorePages) {
+        const url = `https://www.dealabs.com/groupe/lego?hide_expired=true&time_frame=30&page=${page}`;
+      
+        try {
+          const pageDeals = await scrapeDealabs(url);
+      
+          if (pageDeals.length === 0) {
+            hasMorePages = false; // Stop if no more deals are found
+          } else {
+            deals = deals.concat(pageDeals); // Accumulate results
+            page++; // Move to the next page
+          }
+        } catch (error) {
+          if (error.message.includes('Gone')) {
+            console.error('❌ Pagination limit reached (HTTP 410). Stopping.');
+            hasMorePages = false;
+          } else {
+            console.error(`❌ Error scraping page ${page}:`, error.message);
+            hasMorePages = false; // Stop on unexpected errors
+          }
+        }
+      }   
+    
+      if (deals.length > 0) {
+        console.log(`📂 Inserting ${deals.length} deals into MongoDB...`);
+        const result = await collection.insertMany(deals);
+        console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
+    
+        const filePath = `./dealabs_deals.json`;
+        fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
+        console.log(`📝 Deals have been saved to ${filePath}`);
+      } else {
+        console.log('🔍 No deals found.');
+      }    
     } else if (option === 'vinted') {
       console.log('🕵️‍♀️ Scraping deals from Vinted...');
       deals = await scrapeVinted('42173'); // Exemple : recherche d'un set LEGO spécifique
