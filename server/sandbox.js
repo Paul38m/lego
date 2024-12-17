@@ -77,7 +77,8 @@ async function sandbox(option) {
       }    
     } else if (option === 'vinted') {
       console.log('🕵️‍♀️ Scraping deals from Vinted...');
-      deals = await scrapeVinted('42173'); // Exemple : recherche d'un set LEGO spécifique
+      const searchText = 'lego';
+      deals = await scrapeVinted(searchText);
     } else if (option === 'all') {
       console.log('🕵️‍♀️ Scraping deals from all sources...');
       const [avenueDeals, dealabsDeals, vintedDeals] = await Promise.all([

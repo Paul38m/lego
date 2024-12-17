@@ -6,56 +6,73 @@ const headers = {
   Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'fr',
   Connection: 'keep-alive',
-  Referer: 'https://www.vinted.fr/catalog?search_text=10306&brand_ids%5B%5D=89162&page=1&status_ids%5B%5D=6&status_ids%5B%5D=1'
+  Referer: 'https://www.vinted.fr/catalog?search_text=lego'
 };
 
 /**
  * Parse JSON data from Vinted
  * @param {Object} data - JSON response
- * @param {String} item_id - Search term or ID
  * @returns {Array} - Array of parsed deal objects
  */
-const parse = (data, item_id) => {
+const parse = (data) => {
   if (!data || !data.items) {
     console.error('❌ Error: No items found in the response data.');
     return [];
   }
 
   return data.items.map(item => ({
-    id: item_id,
+    id: item.id || uuidv4(),
     title: item.title || 'No title',
     price: parseFloat(item.total_item_price.amount) || 0,
-    link: `${item.url || ''}`,
+    link: `https://www.vinted.fr${item.url || ''}`,
     published: new Date(item.photo.high_resolution.timestamp * 1000).toISOString(),
     uuid: uuidv4()
   }));
 };
 
 /**
- * Fetch and scrape deals from Vinted
- * @param {String} item_id - Vinted item search ID
+ * Fetch and scrape deals from Vinted with pagination
+ * @param {String} searchText - Search term (e.g., "lego")
+ * @param {Number} time - Optional timestamp to filter
  * @returns {Array} - Scraped deals
  */
-export async function scrape(item_id) {
+export async function scrape(searchText) {
+  let allDeals = [];
+  let page = 1;
+
   try {
     const { csrfToken, cookies } = await TokenCookie();
-    const url = `https://www.vinted.fr/api/v2/catalog/items?search_text=${item_id}&brand_ids%5B%5D=89162&page=1&status_ids%5B%5D=6&status_ids%5B%5D=1`;
 
-    const response = await fetch(url, {
-      headers: {
-        ...headers,
-        'X-Csrf-Token': csrfToken,
-        Cookie: cookies
+    while (true) {
+      const url = `https://www.vinted.fr/api/v2/catalog/items?search_text=${searchText}&page=${page}&status_ids%5B%5D=6&status_ids%5B%5D=1`;
+
+      const response = await fetch(url, {
+        headers: {
+          ...headers,
+          'X-Csrf-Token': csrfToken,
+          Cookie: cookies
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`❌ Response error: ${response.status} - ${response.statusText}`);
+        break;
       }
-    });
 
-    if (!response.ok) {
-      console.error(`❌ Response error: ${response.status} - ${response.statusText}`);
-      return [];
+      const data = await response.json();
+      const deals = parse(data);
+
+      if (deals.length === 0) {
+        console.log('✅ No more deals found. Stopping pagination.');
+        break; // Stop if no more results
+      }
+
+      allDeals = allDeals.concat(deals);
+      page++;
     }
 
-    const data = await response.json();
-    return parse(data, item_id);
+    console.log(`✅ Fetched ${allDeals.length} deals in total.`);
+    return allDeals;
   } catch (error) {
     console.error('❌ Error scraping Vinted:', error);
     return [];
