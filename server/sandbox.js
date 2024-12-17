@@ -36,71 +36,211 @@ async function sandbox(option) {
       deals = await scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego');
     } else if (option === 'dealabs') {
       console.log('🕵️‍♀️ Scraping deals from Dealabs...');
-      
+    
       let deals = [];
       let page = 1;
       let hasMorePages = true;
     
-      while (hasMorePages) {
-        const url = `https://www.dealabs.com/groupe/lego?hide_expired=true&time_frame=30&page=${page}`;
-      
-        try {
-          const pageDeals = await scrapeDealabs(url);
-      
-          if (pageDeals.length === 0) {
-            hasMorePages = false; // Stop if no more deals are found
-          } else {
-            deals = deals.concat(pageDeals); // Accumulate results
-            page++; // Move to the next page
-          }
-        } catch (error) {
-          if (error.message.includes('Gone')) {
-            console.error('❌ Pagination limit reached (HTTP 410). Stopping.');
-            hasMorePages = false;
-          } else {
-            console.error(`❌ Error scraping page ${page}:`, error.message);
-            hasMorePages = false; // Stop on unexpected errors
+      try {
+        while (hasMorePages) {
+          const url = `https://www.dealabs.com/groupe/lego?hide_expired=true&time_frame=30&page=${page}`;
+    
+          try {
+            const pageDeals = await scrapeDealabs(url);
+    
+            if (pageDeals.length === 0) {
+              hasMorePages = false; // Stop if no more deals are found
+            } else {
+              deals = deals.concat(pageDeals); // Accumulate results
+              page++; // Move to the next page
+            }
+          } catch (error) {
+            if (error.message.includes('Gone')) {
+              console.error('❌ Pagination limit reached (HTTP 410). Stopping.');
+              hasMorePages = false;
+            } else {
+              console.error(`❌ Error scraping page ${page}:`, error.message);
+              hasMorePages = false; // Stop on unexpected errors
+            }
           }
         }
-      }   
     
-      if (deals.length > 0) {
-        console.log(`📂 Inserting ${deals.length} deals into MongoDB...`);
-        const result = await collection.insertMany(deals);
-        console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
+        if (deals.length > 0) {
+          console.log(`📂 Inserting ${deals.length} deals into MongoDB...`);
+          const result = await collection.insertMany(deals);
+          console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
     
-        const filePath = `./dealabs_deals.json`;
-        fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
-        console.log(`📝 Deals have been saved to ${filePath}`);
-      } else {
-        console.log('🔍 No deals found.');
-      }    
+          const filePath = `./dealabs_deals.json`;
+          fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
+          console.log(`📝 Deals have been saved to ${filePath}`);
+        } else {
+          console.log('🔍 No deals found.');
+        }
+      } catch (globalError) {
+        console.error(`❌ An unexpected error occurred: ${globalError.message}`);
+      } finally {
+        if (client) {
+          console.log('🔌 Closing MongoDB connection...');
+          await client.close();
+        }
+        console.log('👋 Exiting program...');
+        process.exit(0); // Force le programme à se terminer proprement
+      }
     } else if (option === 'vinted') {
-      console.log('🕵️‍♀️ Scraping deals from Vinted...');
+      console.log('🛍️ Scraping deals from Vinted...');
+    
       const searchText = 'lego';
-      deals = await scrapeVinted(searchText);
+      let vintedDeals = [];
+      let vintedPage = 1;
+      let hasMoreVintedPages = true;
+    
+      try {
+        while (hasMoreVintedPages) {
+          try {
+            const pageDeals = await scrapeVinted(searchText, vintedPage);
+    
+            if (pageDeals.length === 0) {
+              console.log(`✅ No more deals found on Vinted. Stopping at page ${vintedPage}.`);
+              hasMoreVintedPages = false; // Arrête la pagination
+            } else {
+              vintedDeals = vintedDeals.concat(pageDeals);
+              console.log(`📄 Fetched ${pageDeals.length} deals from Vinted page ${vintedPage}.`);
+              vintedPage++;
+            }
+          } catch (error) {
+            if (error.message.includes('429')) {
+              console.warn(`⚠️ Vinted rate limit hit (HTTP 429 Too Many Requests). Stopping pagination.`);
+            } else {
+              console.error(`❌ Error scraping Vinted page ${vintedPage}: ${error.message}`);
+            }
+            hasMoreVintedPages = false; // Arrête sur erreur
+          }
+        }
+    
+        console.log(`✅ Fetched ${vintedDeals.length} deals from Vinted.`);
+    
+        // Insertion des résultats dans MongoDB
+        if (vintedDeals.length > 0) {
+          console.log(`📂 Inserting ${vintedDeals.length} deals into MongoDB...`);
+          const result = await collection.insertMany(vintedDeals);
+          console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
+    
+          // Sauvegarde des résultats dans un fichier JSON
+          const filePath = `./vinted_deals.json`;
+          fs.writeFileSync(filePath, JSON.stringify(vintedDeals, null, 2), 'utf-8');
+          console.log(`📝 Deals have been saved to ${filePath}`);
+        } else {
+          console.log('🔍 No deals found on Vinted.');
+        }
+      } catch (error) {
+        console.error(`❌ An unexpected error occurred while scraping Vinted: ${error.message}`);
+      } finally {
+        if (client) {
+          console.log('🔌 Closing MongoDB connection...');
+          await client.close();
+        }
+        console.log('👋 Exiting program...');
+        process.exit(0); // Force l'arrêt propre du programme
+      }
     } else if (option === 'all') {
       console.log('🕵️‍♀️ Scraping deals from all sources...');
-      const [avenueDeals, dealabsDeals, vintedDeals] = await Promise.all([
-        scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego'),
-        scrapeDealabs('https://www.dealabs.com/groupe/lego'),
-        scrapeVinted('42173')
-      ]);
-      deals = [...avenueDeals, ...dealabsDeals, ...vintedDeals];
+    
+      let allDeals = [];
+    
+      try {
+        // Scraping Avenue de la Brique
+        /*console.log('🧱 Scraping deals from Avenue de la Brique...');
+        const avenueDeals = await scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego');
+        console.log(`✅ Found ${avenueDeals.length} deals from Avenue de la Brique.`);
+        allDeals = allDeals.concat(avenueDeals);*/
+    
+        // Scraping Dealabs avec pagination
+        console.log('🔥 Scraping deals from Dealabs...');
+        let dealabsDeals = [];
+        let dealabsPage = 1;
+        let hasMoreDealabsPages = true;
+    
+        while (hasMoreDealabsPages) {
+          const url = `https://www.dealabs.com/groupe/lego?hide_expired=true&time_frame=30&page=${dealabsPage}`;
+          try {
+            const pageDeals = await scrapeDealabs(url);
+    
+            if (pageDeals.length === 0) {
+              hasMoreDealabsPages = false; // Stop pagination
+            } else {
+              dealabsDeals = dealabsDeals.concat(pageDeals);
+              console.log(`📄 Fetched ${pageDeals.length} deals from Dealabs page ${dealabsPage}.`);
+              dealabsPage++;
+            }
+          } catch (error) {
+            if (error.message.includes('Gone')) {
+              console.warn(`⚠️ Dealabs pagination stopped at page ${dealabsPage} (HTTP 410 Gone).`);
+            } else {
+              console.error(`❌ Error scraping Dealabs page ${dealabsPage}: ${error.message}`);
+            }
+            hasMoreDealabsPages = false;
+          }
+        }
+        console.log(`✅ Fetched ${dealabsDeals.length} deals from Dealabs.`);
+        allDeals = allDeals.concat(dealabsDeals);
+    
+        // Scraping Vinted avec pagination
+        console.log('🛍️ Scraping deals from Vinted...');
+        const searchText = 'lego';
+        let vintedDeals = [];
+        let vintedPage = 1;
+        let hasMoreVintedPages = true;
+    
+        while (hasMoreVintedPages) {
+          try {
+            const pageDeals = await scrapeVinted(searchText, vintedPage);
+            if (pageDeals.length === 0) {
+              console.log(`✅ No more deals found on Vinted. Stopping at page ${vintedPage}.`);
+              hasMoreVintedPages = false;
+            } else {
+              vintedDeals = vintedDeals.concat(pageDeals);
+              console.log(`📄 Fetched ${pageDeals.length} deals from Vinted page ${vintedPage}.`);
+              vintedPage++;
+            }
+          } catch (error) {
+            if (error.message.includes('429')) {
+              console.warn(`⚠️ Vinted rate limit hit (HTTP 429 Too Many Requests). Stopping pagination.`);
+            } else {
+              console.error(`❌ Error scraping Vinted page ${vintedPage}: ${error.message}`);
+            }
+            hasMoreVintedPages = false;
+          }
+        }
+        console.log(`✅ Fetched ${vintedDeals.length} deals from Vinted.`);
+        allDeals = allDeals.concat(vintedDeals);
+    
+        // Afficher le nombre total de deals collectés
+        console.log(`🔍 Total deals scraped: ${allDeals.length}`);
+    
+        // Insertion dans la base de données
+        if (allDeals.length > 0) {
+          console.log(`📂 Inserting ${allDeals.length} deals into MongoDB...`);
+          const result = await collection.insertMany(allDeals);
+          console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
+    
+          const filePath = `./all_deals.json`;
+          fs.writeFileSync(filePath, JSON.stringify(allDeals, null, 2), 'utf-8');
+          console.log(`📝 Deals have been saved to ${filePath}`);
+        } else {
+          console.log('🔍 No deals found from any source.');
+        }
+      } catch (error) {
+        console.error(`❌ An unexpected error occurred while scraping: ${error.message}`);
+      } finally {
+        if (client) {
+          console.log('🔌 Closing MongoDB connection...');
+          await client.close();
+        }
+        console.log('👋 Exiting program...');
+        process.exit(0); // Force l'arrêt propre du programme
+      }
     }
-
-    if (deals.length > 0) {
-      console.log(`📂 Inserting ${deals.length} deals into MongoDB...`);
-      const result = await collection.insertMany(deals);
-      console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
-
-      const filePath = `./${option}_deals.json`;
-      fs.writeFileSync(filePath, JSON.stringify(deals, null, 2), 'utf-8');
-      console.log(`📝 Deals have been saved to ${filePath}`);
-    } else {
-      console.log('🔍 No deals found.');
-    }
-
+    
     if (option === 'queries') {
       console.log('🔍 Executing MongoDB queries...');
 

@@ -21,11 +21,12 @@ const parse = (data) => {
   }
 
   return data.items.map(item => ({
+    community : 'vinted',
     id: item.id || uuidv4(),
     title: item.title || 'No title',
     price: parseFloat(item.total_item_price.amount) || 0,
     link: `https://www.vinted.fr${item.url || ''}`,
-    published: new Date(item.photo.high_resolution.timestamp * 1000).toISOString(),
+    published: new Date(item.photo.high_resolution.timestamp * 1000).toLocaleString(),
     uuid: uuidv4()
   }));
 };

@@ -31,6 +31,7 @@ async function scrapeProductDetails(productUrl) {
     const imageUrl = $('.prodf-img img').attr('src');
 
     return {
+      community : 'avenue de la brique',
       title,
       model,
       brand,
