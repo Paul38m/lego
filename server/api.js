@@ -43,44 +43,52 @@ app.get('/deals/search', async (request, response) => {
 
   // Price filter
   if (price) {
-    query.price = { $lte: parseFloat(price) };  // Deals with price less than or equal to the provided value
+    query.price = { $lte: parseFloat(price) };  // Deals with price <= specified value
   }
 
-  // Date filter (assuming 'publishedAt' is stored as a date or a timestamp)
+  // Date filter (publishedAt assumed to be a date/timestamp)
   if (date) {
     const dateFilter = new Date(date);
-    query.publishedAt = { $gte: dateFilter };  // Deals published on or after the specified date
+    query.publishedAt = { $gte: dateFilter };  // Deals published after specified date
   }
 
-  // Filter by specific values (best-discount or most-commented)
+  // Filter by (best-discount or most-commented)
   if (filterBy === 'best-discount') {
-    // No extra filtering needed for the query, but you'll sort by the highest discount later
+    // No extra query filtering, will sort later by discount
+    sortOrder = { discount: -1 };  // Sort by discount in descending order
   } else if (filterBy === 'most-commented') {
-    // Sort by comment count later
+    // No extra query filtering, will sort later by comments
+    sortOrder = { commentCount: -1 };  // Sort by comment count in descending order
   }
 
   try {
-    // Determine the sorting order
-    let sortOrder = { price: 1 };  // Default sort by price in ascending order
-
-    // If sortBy is specified, sort by it
-    if (sortBy === 'date') {
-      sortOrder = { publishedAt: 1 };  // Sort by publishedAt (date) in ascending order (oldest first)
-    } else if (sortBy === 'price') {
-      sortOrder = { price: 1 };  // Sort by price in ascending order (default behavior)
+    // Determine sorting order
+    if (!sortOrder) {
+      sortOrder = { price: 1 };  // Default: Sort by price (ascending)
     }
 
-    // Fetch deals from MongoDB with the applied filters and sorting
+    if (sortBy === 'date') {
+      sortOrder = { publishedAt: 1 };  // Sort by date (oldest first)
+    } else if (sortBy === 'price') {
+      sortOrder = { price: 1 };  // Sort by price ascending
+    } else if (sortBy === 'price-desc') {
+      sortOrder = { price: -1 };  // Sort by price descending
+    } else if (sortBy === 'date-desc') {
+      sortOrder = { publishedAt: -1 };  // Sort by date descending (newest first)
+    }
+
+    // Fetch deals from MongoDB with applied filters and sorting
     const deals = await db
       .collection(COLLECTION_NAME)
       .find(query)
-      .sort(sortOrder)  // Apply the sorting based on the query parameter
-      .limit(parseInt(limit))  // Limit the number of results to the specified 'limit'
+      .sort(sortOrder)
+      .limit(parseInt(limit))
       .toArray();
 
-    // Prepare the response data
+    // Total count of matching documents
     const total = await db.collection(COLLECTION_NAME).countDocuments(query);
 
+    // Format results
     const results = deals.map(deal => ({
       link: deal.shareableLink,
       retail: deal.retail,
@@ -89,15 +97,14 @@ app.get('/deals/search', async (request, response) => {
       temperature: deal.temperature,
       photo: deal.photo,
       comments: deal.commentCount,
-      // Format the 'publishedAt' as YYYY/MM/DD
-      published: new Date(deal.publishedAt).toLocaleDateString('en-GB'),  // 'en-GB' for DD/MM/YYYY
+      published: deal.publishedAt.split(' ')[0],
       title: deal.title,
       id: deal.id,
       community: deal.community,
       uuid: deal.uuid,
     }));
 
-    // Send the response
+    // Send response
     response.send({
       limit: parseInt(limit),
       total: total,
@@ -108,6 +115,7 @@ app.get('/deals/search', async (request, response) => {
     response.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
 
 
 

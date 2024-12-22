@@ -48,7 +48,7 @@ export async function scrape(url) {
             const commentCount = thread.commentCount || 0;
             const temperature = thread.temperature || 0;
             const publishedAt = thread.publishedAt || '';
-            const shareableLink = thread.shareableLink || '';
+            const link = thread.link || '';
 
             // Calcul de la réduction
             const discount =
@@ -90,7 +90,7 @@ export async function scrape(url) {
               commentCount,
               temperature,
               publishedAt: new Date(publishedAt * 1000).toLocaleString(), // Converti en date lisible
-              shareableLink,
+              link,
               photo,
               uuid,
             });
