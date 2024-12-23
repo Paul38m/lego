@@ -38,73 +38,73 @@ app.get('/', (request, response) => {
 app.get('/deals/search', async (request, response) => {
   const { limit = 12, price, date, filterBy, sortBy } = request.query;
 
-  // Build query object
   let query = {};
 
-  // Price filter
   if (price) {
-    query.price = { $lte: parseFloat(price) };  // Deals with price <= specified value
+    query.price = { $lte: parseFloat(price) };
   }
 
-  // Date filter (publishedAt assumed to be a date/timestamp)
   if (date) {
     const dateFilter = new Date(date);
-    query.publishedAt = { $gte: dateFilter };  // Deals published after specified date
+    query.publishedAt = { $gte: dateFilter };
   }
 
-  // Filter by (best-discount or most-commented)
+  let sortOrder = { price: 1 };
+
   if (filterBy === 'best-discount') {
-    // No extra query filtering, will sort later by discount
-    sortOrder = { discount: -1 };  // Sort by discount in descending order
+    sortOrder = { discount: -1 };
   } else if (filterBy === 'most-commented') {
-    // No extra query filtering, will sort later by comments
-    sortOrder = { commentCount: -1 };  // Sort by comment count in descending order
+    sortOrder = { commentCount: -1 };
+  }
+
+  if (sortBy === 'date') {
+    sortOrder = { publishedAt: 1 };
+  } else if (sortBy === 'price') {
+    sortOrder = { price: 1 };
+  } else if (sortBy === 'price-desc') {
+    sortOrder = { price: -1 };
+  } else if (sortBy === 'date-desc') {
+    sortOrder = { publishedAt: -1 };
   }
 
   try {
-    // Determine sorting order
-    if (!sortOrder) {
-      sortOrder = { price: 1 };  // Default: Sort by price (ascending)
-    }
-
-    if (sortBy === 'date') {
-      sortOrder = { publishedAt: 1 };  // Sort by date (oldest first)
-    } else if (sortBy === 'price') {
-      sortOrder = { price: 1 };  // Sort by price ascending
-    } else if (sortBy === 'price-desc') {
-      sortOrder = { price: -1 };  // Sort by price descending
-    } else if (sortBy === 'date-desc') {
-      sortOrder = { publishedAt: -1 };  // Sort by date descending (newest first)
-    }
-
-    // Fetch deals from MongoDB with applied filters and sorting
-    const deals = await db
-      .collection(COLLECTION_NAME)
-      .find(query)
-      .sort(sortOrder)
-      .limit(parseInt(limit))
+    const deals = await db.collection(COLLECTION_NAME)
+      .aggregate([
+        {
+          $addFields: {
+            publishedAt: {
+              $dateFromString: {
+                dateString: '$publishedAt',
+                format: '%d/%m/%Y %H:%M:%S',
+                onError: new Date('1970-01-01'),  // Default date if parsing fails
+                onNull: new Date('1970-01-01')
+              }
+            }
+          }
+        },
+        { $match: query },
+        { $sort: sortOrder },
+        { $limit: parseInt(limit) }
+      ])
       .toArray();
 
-    // Total count of matching documents
     const total = await db.collection(COLLECTION_NAME).countDocuments(query);
 
-    // Format results
     const results = deals.map(deal => ({
-      link: deal.shareableLink,
+      link: deal.link,
       retail: deal.retail,
       price: deal.price,
       discount: deal.discount,
       temperature: deal.temperature,
       photo: deal.photo,
       comments: deal.commentCount,
-      published: deal.publishedAt.split(' ')[0],
+      published: deal.publishedAt.toISOString().split('T')[0],  // Format ISO date
       title: deal.title,
       id: deal.id,
       community: deal.community,
       uuid: deal.uuid,
     }));
 
-    // Send response
     response.send({
       limit: parseInt(limit),
       total: total,
@@ -115,6 +115,7 @@ app.get('/deals/search', async (request, response) => {
     response.status(500).send({ error: 'Internal Server Error' });
   }
 });
+
 
 
 
