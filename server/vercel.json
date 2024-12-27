@@ -5,5 +5,11 @@
     { "src": "/deals/search", "dest": "api.js" },
     { "src": "/deals/(.*)", "dest": "api.js" },
     { "src": "/", "dest": "api.js" }
-  ]
+  ],
+  "env": {
+    "MONGO_URL": "@mongo_url",
+    "DB_NAME": "@db_name",
+    "COLLECTION_NAME": "@collection_name"
+  }
 }
+

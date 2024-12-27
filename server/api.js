@@ -1,12 +1,18 @@
+require('dotenv').config();
+
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
 const { MongoClient } = require('mongodb');
 
 const PORT = 8092;
-const MONGO_URL = 'mongodb+srv://Paul:Carapuce38@cluster0.udtxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+/*const MONGO_URL = 'mongodb+srv://Paul:Carapuce38@cluster0.udtxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const DB_NAME = 'lego';
-const COLLECTION_NAME = 'deals';
+const COLLECTION_NAME = 'deals';*/
+const MONGO_URL = process.env.MONGO_URL;
+const DB_NAME = process.env.DB_NAME;
+const COLLECTION_NAME = process.env.COLLECTION_NAME;
+
 
 const app = express();
 
