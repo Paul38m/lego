@@ -12,6 +12,7 @@ import {
 } from './queries.js';
 import { MongoClient } from 'mongodb';
 
+// MongoDB connection URI and database name
 const MONGODB_URI = 'mongodb+srv://Paul:Carapuce38@cluster0.udtxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const MONGODB_DB_NAME = 'lego';
 
@@ -24,6 +25,7 @@ async function sandbox(option) {
     const db = client.db(MONGODB_DB_NAME);
     const collection = db.collection('deals');
 
+    // If the user selected any scraping option, clear the previous deals
     if (['avenue', 'dealabs', 'vinted', 'all'].includes(option)) {
       console.log('🧹 Clearing previous deals from MongoDB...');
       await collection.deleteMany({});
@@ -31,10 +33,13 @@ async function sandbox(option) {
 
     let deals = [];
 
+    // Scraping deals from Avenue de la Brique
     if (option === 'avenue') {
       console.log('🕵️‍♀️ Scraping deals from Avenue de la Brique...');
       deals = await scrapeAvenueDeLaBrique('https://www.avenuedelabrique.com/promotions-et-bons-plans-lego');
-    } else if (option === 'dealabs') {
+    } 
+    // Scraping deals from Dealabs with pagination
+    else if (option === 'dealabs') {
       console.log('🕵️‍♀️ Scraping deals from Dealabs...');
     
       let deals = [];
@@ -84,9 +89,11 @@ async function sandbox(option) {
           await client.close();
         }
         console.log('👋 Exiting program...');
-        process.exit(0); // Force le programme à se terminer proprement
+        process.exit(0); // Force the program to terminate cleanly
       }
-    } else if (option === 'vinted') {
+    } 
+    // Scraping deals from Vinted with pagination
+    else if (option === 'vinted') {
       console.log('🛍️ Scraping deals from Vinted...');
     
       const searchText = 'lego';
@@ -101,7 +108,7 @@ async function sandbox(option) {
     
             if (pageDeals.length === 0) {
               console.log(`✅ No more deals found on Vinted. Stopping at page ${vintedPage}.`);
-              hasMoreVintedPages = false; // Arrête la pagination
+              hasMoreVintedPages = false; // Stop pagination
             } else {
               vintedDeals = vintedDeals.concat(pageDeals);
               console.log(`📄 Fetched ${pageDeals.length} deals from Vinted page ${vintedPage}.`);
@@ -113,19 +120,19 @@ async function sandbox(option) {
             } else {
               console.error(`❌ Error scraping Vinted page ${vintedPage}: ${error.message}`);
             }
-            hasMoreVintedPages = false; // Arrête sur erreur
+            hasMoreVintedPages = false; // Stop on error
           }
         }
     
         console.log(`✅ Fetched ${vintedDeals.length} deals from Vinted.`);
     
-        // Insertion des résultats dans MongoDB
+        // Insert the results into MongoDB
         if (vintedDeals.length > 0) {
           console.log(`📂 Inserting ${vintedDeals.length} deals into MongoDB...`);
           const result = await collection.insertMany(vintedDeals);
           console.log(`✅ ${result.insertedCount} deals have been inserted into the database.`);
     
-          // Sauvegarde des résultats dans un fichier JSON
+          // Save the results to a JSON file
           const filePath = `./vinted_deals.json`;
           fs.writeFileSync(filePath, JSON.stringify(vintedDeals, null, 2), 'utf-8');
           console.log(`📝 Deals have been saved to ${filePath}`);
@@ -140,9 +147,11 @@ async function sandbox(option) {
           await client.close();
         }
         console.log('👋 Exiting program...');
-        process.exit(0); // Force l'arrêt propre du programme
+        process.exit(0); // Force clean termination of the program
       }
-    } else if (option === 'all') {
+    } 
+    // Scraping from all sources (Avenue, Dealabs, and Vinted)
+    else if (option === 'all') {
       console.log('🕵️‍♀️ Scraping deals from all sources...');
     
       let allDeals = [];
@@ -154,7 +163,7 @@ async function sandbox(option) {
         console.log(`✅ Found ${avenueDeals.length} deals from Avenue de la Brique.`);
         allDeals = allDeals.concat(avenueDeals);*/
     
-        // Scraping Dealabs avec pagination
+        // Scraping Dealabs with pagination
         console.log('🔥 Scraping deals from Dealabs...');
         let dealabsDeals = [];
         let dealabsPage = 1;
@@ -184,7 +193,7 @@ async function sandbox(option) {
         console.log(`✅ Fetched ${dealabsDeals.length} deals from Dealabs.`);
         allDeals = allDeals.concat(dealabsDeals);
     
-        // Scraping Vinted avec pagination
+        // Scraping Vinted with pagination
         console.log('🛍️ Scraping deals from Vinted...');
         const searchText = 'lego';
         let vintedDeals = [];
@@ -214,10 +223,10 @@ async function sandbox(option) {
         console.log(`✅ Fetched ${vintedDeals.length} deals from Vinted.`);
         allDeals = allDeals.concat(vintedDeals);
     
-        // Afficher le nombre total de deals collectés
+        // Display the total number of deals scraped
         console.log(`🔍 Total deals scraped: ${allDeals.length}`);
     
-        // Insertion dans la base de données
+        // Insert the collected deals into the database
         if (allDeals.length > 0) {
           console.log(`📂 Inserting ${allDeals.length} deals into MongoDB...`);
           const result = await collection.insertMany(allDeals);
@@ -237,10 +246,11 @@ async function sandbox(option) {
           await client.close();
         }
         console.log('👋 Exiting program...');
-        process.exit(0); // Force l'arrêt propre du programme
+        process.exit(0); // Force the program to terminate cleanly
       }
     }
     
+    // If the user selected queries, execute MongoDB queries
     if (option === 'queries') {
       console.log('🔍 Executing MongoDB queries...');
 
@@ -280,5 +290,6 @@ async function sandbox(option) {
   }
 }
 
+// Execute the sandbox function with the provided option from command-line arguments
 const [,, option] = process.argv;
 sandbox(option);

@@ -1,21 +1,22 @@
-  import { MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
-// MongoDB URI et nom de la base de données
+// MongoDB URI and database name
 const MONGODB_URI = 'mongodb+srv://Paul:Carapuce38@cluster0.udtxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const MONGODB_DB_NAME = 'lego';
 
-// Méthode pour se connecter à MongoDB
+// Method to connect to MongoDB
 async function connectToDatabase() {
   const client = await MongoClient.connect(MONGODB_URI);
   const db = client.db(MONGODB_DB_NAME);
   return { client, db };
 }
 
-// 1. Trouver toutes les meilleures remises
+// 1. Find all the best discount deals
 export async function findBestDiscountDeals() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
+    // Find deals with a discount, sorted in descending order, limiting to 10 results
     const bestDeals = await collection.find({ discount: { $exists: true } })
       .sort({ discount: -1 })
       .limit(10)
@@ -26,11 +27,12 @@ export async function findBestDiscountDeals() {
   }
 }
 
-// 2. Trouver les deals avec plus de 10 commentaires
+// 2. Find deals with more than 10 comments
 export async function findMostCommentedDeals() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
+    // Find deals with more than 10 comments, sorted by comment count in descending order, limiting to 10 results
     const mostCommented = await collection.find({ commentCount: { $gt: 10 } })
       .sort({ commentCount: -1 })
       .limit(10)
@@ -41,14 +43,14 @@ export async function findMostCommentedDeals() {
   }
 }
 
-
-// 3. Trouver tous les deals triés par prix
+// 3. Find all deals sorted by price
 export async function findDealsSortedByPrice() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
+    // Retrieve all deals and sort them by price in ascending order
     const sortedByPrice = await collection.find({})
-      .sort({ price: 1 }) // Trier par prix croissant
+      .sort({ price: 1 }) // Sort by price in ascending order
       .toArray();
     return sortedByPrice;
   } finally {
@@ -56,25 +58,26 @@ export async function findDealsSortedByPrice() {
   }
 }
 
+// 4. Find deals sorted by the date they were published
 export async function findDealsSortedByDate() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
 
-    // Récupérer tous les deals
+    // Retrieve all deals
     const deals = await collection.find({}).toArray();
 
-    // Convertir 'publishedAt' en objet Date, trier et ensuite reconvertir en chaîne
+    // Convert 'publishedAt' to a Date object, sort, and then convert back to string
     const sortedByDate = deals
       .map(deal => {
-        // Convertir 'publishedAt' en objet Date
-        deal.publishedAt = new Date(deal.publishedAt); // Conversion en objet Date
+        // Convert 'publishedAt' to a Date object
+        deal.publishedAt = new Date(deal.publishedAt); // Convert to Date object
         return deal;
       })
-      .sort((a, b) => b.publishedAt - a.publishedAt) // Trier par date décroissante
+      .sort((a, b) => b.publishedAt - a.publishedAt) // Sort by descending date
       .map(deal => {
-        // Reconversion en chaîne après le tri
-        deal.publishedAt = deal.publishedAt.toLocaleString(); // Convertir la date en chaîne
+        // Convert back to string after sorting
+        deal.publishedAt = deal.publishedAt.toLocaleString(); // Convert date back to string
         return deal;
       });
 
@@ -84,70 +87,66 @@ export async function findDealsSortedByDate() {
   }
 }
 
-
-
-
-//Compte les deals par id
+// 5. Count the number of deals by ID
 export async function countDealsById() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
 
-    // Récupère tous les deals
+    // Retrieve all deals
     const allDeals = await collection.find({}).toArray();
 
-    // Utilise un objet pour compter les occurrences des modèles
+    // Use an object to count occurrences of each deal ID
     const idCounts = {};
 
     allDeals.forEach((deal) => {
       const id = deal.id;
       if (id) {
         if (idCounts[id]) {
-          idCounts[id] += 1; // Incrémente le compteur si le modèle existe déjà
+          idCounts[id] += 1; // Increment the counter if the ID already exists
         } else {
-          idCounts[id] = 1; // Initialise le compteur à 1 si le modèle est nouveau
+          idCounts[id] = 1; // Initialize the counter to 1 if the ID is new
         }
       }
     });
 
-    // Retourne un tableau contenant les modèles et leurs occurrences
+    // Return an array of IDs and their respective counts
     const result = Object.entries(idCounts).map(([id, count]) => ({
       id,
       count,
     }));
 
-    return result; // Retourne les modèles avec les compteurs
+    return result; // Return the IDs with their counts
   } finally {
     await client.close();
   }
 }
 
-
-// 6. Trouver les deals publiés il y a moins de 3 semaines
+// 6. Find deals published in the last 3 weeks
 export async function findRecentSales() {
   const { client, db } = await connectToDatabase();
   try {
     const collection = db.collection('deals');
     
-    // Calculer la date il y a 3 semaines
+    // Calculate the date 3 weeks ago
     const threeWeeksAgo = new Date();
-    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21); // Date d'il y a 3 semaines
+    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21); // Date 3 weeks ago
     
-    // Récupérer tous les deals
+    // Retrieve all deals
     const deals = await collection.find({}).toArray();
 
-    // Filtrer les deals qui ont une date de publication dans les 3 dernières semaines
+    // Filter the deals that were published in the last 3 weeks
     const recentSales = deals
       .filter(deal => {
-        // Assurez-vous que la date 'publishedAt' est un objet Date
+        // Ensure 'publishedAt' is a Date object
         const dealDate = new Date(deal.publishedAt);
-        return dealDate >= threeWeeksAgo; // Garder les deals publiés il y a moins de 3 semaines
+        return dealDate >= threeWeeksAgo; // Keep deals published in the last 3 weeks
       })
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); // Trier par date décroissante
+      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)); // Sort by descending date
 
-    // Reconvertir les dates en chaînes pour affichage
+    // Convert dates back to strings for display
     const result = recentSales.map(deal => {
-      deal.publishedAt = new Date(deal.publishedAt).toLocaleString(); // Convertir en chaîne
+      deal.publishedAt = new Date(deal.publishedAt).toLocaleString(); // Convert to string
       return deal;
     });
 
@@ -156,4 +155,3 @@ export async function findRecentSales() {
     await client.close();
   }
 }
-
